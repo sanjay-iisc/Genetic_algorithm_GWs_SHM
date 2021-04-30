@@ -7,21 +7,21 @@ import math
 import pandas as pd
 from scipy.special import jv 
 plt.style.use('fivethirtyeight')
-POPULATION_SIZE=100
+POPULATION_SIZE=10
 TOURNAMENT_SELECTION_SIZE=2
 MUTATION_RATE=0.25
 NUMBER_OF_ELITE_CHROMOSOMES=0
 sizeList=[10,10]
-xUpperList=[1.30,-0.22,1]#[20,10,10,10,10,10] # three variable alpha , beta and gamma
-xLowerList=[1,-0.30,0]#[-20,-10,-10,-10,-10,-10]
+xUpperList=[2,1,1] # three variable alpha , beta and gamma
+xLowerList=[-2,-1,-1]
 a=0.5 # alpha for crossover
-nc=20
-sigma=[0.01,0.01,0.01]#,0.01,0.01,0.01] # variation in  
-### Import data 
+nc=2
+sigma=[0.01,0.01,0.01] # variation in  
 ### Import data 
 Data=pd.read_csv("E:\Work\Code\\matlabJordan\\calcul_modal\\NicolasPlate\\FEMstress\\data_stress_RZ_waveNumber.csv")
 K=Data['K[rad/mm]']
 TauK_RZ=Data['sigma_RZ[N/mm^2] F=5 [KHz]']
+a=jv(0.25,1)
 # %%
 class Chromosome:
     def __init__(self):
@@ -32,8 +32,8 @@ class Chromosome:
             self._genes.append(a)
 
     def get_fitness(self):
-        output=(jv(self._genes[0],K*self._genes[2])*(K*5)**self._genes[1])
-        self._fitness= np.sum( (TauK_RZ-output)**2)
+        self._fitness= np.sum(TauK_RZ-jv(self._genes[0],K*5e-3*self._genes[2])*(K*5e-3)**self._genes[1])**2
+        # print(np.sum(TauK_RZ-jv(self._genes[0],K*5e-3*self._genes[2])*(K*5e-3)**self._genes[1])**2)
         return self._fitness
 
     def get_genes(self):
@@ -224,7 +224,11 @@ def figureplot(x,y,ax=None,**keyword):
                 plt.savefig('K:\LMC\Sanjay\Comsolresults\\NicolasResults\FiguresNicolasResults\Results\\'+a+'.png')
 
 if __name__=='__main__':
-    
+    # fig,axes=plt.subplots(1,1)
+    # figureplot(K,TauK_RZ*26.1,ax=axes,label='Rz')
+    # y=jv(1.11,K*5e-3*0.93)*(K*5e-3)**(-0.22)
+    # figureplot(K,y/2,ax=axes,label='data')
+    # plt.show()
     population=Population(POPULATION_SIZE)
     population.get_chromosomes().sort(key=lambda x:x.get_fitness(), reverse=False)
     _print_population(population,0)
@@ -242,15 +246,7 @@ if __name__=='__main__':
         plt.pause(0.01)
         generation_number+=1
     print('Minmization -- at the function :',population.get_chromosomes()[0])
-
-    fig,axes=plt.subplots(1,1)
-    figureplot(K,abs(TauK_RZ),ax=axes,label='Rz')
-    realPara=[1.11,-0.22,0.93]
-    fitingValue=population.get_chromosomes()[0]._genes#realPara
-    y=jv(fitingValue[0],K*5*fitingValue[2])*(K*5)**(fitingValue[1])
-    figureplot(K,abs(y)/(2*np.pi),ax=axes,label='fitting')
     plt.show()
-
 
 
 

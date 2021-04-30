@@ -7,21 +7,21 @@ import math
 import pandas as pd
 from scipy.special import jv 
 plt.style.use('fivethirtyeight')
-POPULATION_SIZE=100
+POPULATION_SIZE=400
 TOURNAMENT_SELECTION_SIZE=2
 MUTATION_RATE=0.25
-NUMBER_OF_ELITE_CHROMOSOMES=0
-sizeList=[10,10]
-xUpperList=[1.30,-0.22,1]#[20,10,10,10,10,10] # three variable alpha , beta and gamma
-xLowerList=[1,-0.30,0]#[-20,-10,-10,-10,-10,-10]
+NUMBER_OF_ELITE_CHROMOSOMES=4
+sizeList=[10]
+xUpperList=[100,1,0.5,-1]#[20,10,10,10,10,10] # three variable alpha , beta and gamma
+xLowerList=[0,0,-0.5,1]#[-20,-10,-10,-10,-10,-10]
 a=0.5 # alpha for crossover
 nc=20
-sigma=[0.01,0.01,0.01]#,0.01,0.01,0.01] # variation in  
+sigma=[0.1,0.01,0.01,0.01]#,0.01,0.01,0.01] # variation in  
 ### Import data 
 ### Import data 
 Data=pd.read_csv("E:\Work\Code\\matlabJordan\\calcul_modal\\NicolasPlate\\FEMstress\\data_stress_RZ_waveNumber.csv")
 K=Data['K[rad/mm]']
-TauK_RZ=Data['sigma_RZ[N/mm^2] F=5 [KHz]']
+TauK_RZ=Data['sigma_RZ[N/mm^2] F=90 [KHz]']
 # %%
 class Chromosome:
     def __init__(self):
@@ -32,7 +32,7 @@ class Chromosome:
             self._genes.append(a)
 
     def get_fitness(self):
-        output=(jv(self._genes[0],K*self._genes[2])*(K*5)**self._genes[1])
+        output=self._genes[0]*jv(1+self._genes[2],K*5*self._genes[1])*(K*5)**self._genes[3]
         self._fitness= np.sum( (TauK_RZ-output)**2)
         return self._fitness
 
@@ -66,13 +66,13 @@ class GeneticAlgorithm:
             crossover_pop.get_chromosomes().append(pop.get_chromosomes()[i]) ## we will move this chromose to the next gen
         i=NUMBER_OF_ELITE_CHROMOSOMES
         ## here we will exclude the elite chromsome
-        while i < POPULATION_SIZE//2:
+        while i < POPULATION_SIZE:
             # crossover population will have population after the selection.Then we select the best 2 Chromosome
             chromosome1=GeneticAlgorithm._select_tournament_population(pop).get_chromosomes()[0] # here we call to the _tournament_population
             chromosome2=GeneticAlgorithm._select_tournament_population(pop).get_chromosomes()[0]
-            offspring1,offspring2 =GeneticAlgorithm.sbx_crossover_chromosomes(chromosome1, chromosome2)
+            offspring1=GeneticAlgorithm._blx_alpha_crossover(chromosome1, chromosome2)
             crossover_pop.get_chromosomes().append(offspring1)
-            crossover_pop.get_chromosomes().append(offspring2)
+            # crossover_pop.get_chromosomes().append(offspring2)
             i+=1
         return crossover_pop
     #creating the Mutation Population:
@@ -247,8 +247,8 @@ if __name__=='__main__':
     figureplot(K,abs(TauK_RZ),ax=axes,label='Rz')
     realPara=[1.11,-0.22,0.93]
     fitingValue=population.get_chromosomes()[0]._genes#realPara
-    y=jv(fitingValue[0],K*5*fitingValue[2])*(K*5)**(fitingValue[1])
-    figureplot(K,abs(y)/(2*np.pi),ax=axes,label='fitting')
+    y=fitingValue[0]*jv(1+fitingValue[2],K*5*fitingValue[1])*(K*5)**fitingValue[3]
+    figureplot(K,abs(y),ax=axes,label='fitting')
     plt.show()
 
 
